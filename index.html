@@ -36,19 +36,19 @@
                         <div class="stats-section">
                             <div class="stat-group">
                                 <label>最大生命值：</label>
-                                <input type="number" class="stat-input" value="1000" data-stat="maxHp">
+                                <input type="number" class="stat-input" value="100000" data-stat="maxHp">
                             </div>
                             <div class="stat-group">
                                 <label>攻击力：</label>
-                                <input type="number" class="stat-input" value="100" data-stat="attack">
+                                <input type="number" class="stat-input" value="100000" data-stat="attack">
                             </div>
                             <div class="stat-group">
                                 <label>防御力：</label>
-                                <input type="number" class="stat-input" value="50" data-stat="defense">
+                                <input type="number" class="stat-input" value="100000" data-stat="defense">
                             </div>
                             <div class="stat-group">
                                 <label>四维：</label>
-                                <input type="number" class="stat-input" value="10" data-stat="fourDimensions">
+                                <input type="number" class="stat-input" value="10000" data-stat="fourDimensions">
                             </div>
                             <div class="stat-group">
                                 <label>速度：</label>
@@ -56,7 +56,10 @@
                             </div>
                             <div class="stat-group">
                                 <label>韧性：</label>
-                                <input type="number" class="stat-input" value="50" data-stat="toughness">
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="toughness">
+                                    <span class="percent-symbol">%</span>
+                                </div>
                             </div>
                             <div class="stat-group">
                                 <label>暴击率：</label>
@@ -155,7 +158,10 @@
                             </div>
                             <div class="stat-group">
                                 <label>韧性：</label>
-                                <input type="number" class="stat-input" value="50" data-stat="toughness" disabled>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="toughness" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
                             </div>
                             <div class="stat-group">
                                 <label>暴击率：</label>
@@ -232,7 +238,6 @@
                     <!-- 卡牌效果页签 -->
                     <div class="tab-content" data-tab="card">
                         <div class="stats-section">
-                            <p class="placeholder-text">暂无卡牌效果</p>
                         </div>
                     </div>
                 </div>
@@ -322,7 +327,10 @@
                             </div>
                             <div class="stat-group">
                                 <label>韧性：</label>
-                                <input type="number" class="stat-input" value="50" data-stat="toughness">
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="toughness">
+                                    <span class="percent-symbol">%</span>
+                                </div>
                             </div>
                             <div class="stat-group">
                                 <label>暴击率：</label>
@@ -421,7 +429,10 @@
                             </div>
                             <div class="stat-group">
                                 <label>韧性：</label>
-                                <input type="number" class="stat-input" value="50" data-stat="toughness" disabled>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="toughness" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
                             </div>
                             <div class="stat-group">
                                 <label>暴击率：</label>
@@ -498,12 +509,22 @@
                     <!-- 卡牌效果页签 -->
                     <div class="tab-content" data-tab="card">
                         <div class="stats-section">
-                            <p class="placeholder-text">暂无卡牌效果</p>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+        
+        <!-- 卡牌区域 -->
+        <div class="card-area">
+            <!-- 卡牌仓库 -->
+            <div class="card-repository">
+                <h3>卡牌仓库</h3>
+                <div class="card-list">
+                    <!-- 卡牌将由JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
     </div>
     <script type="module" src="js/main.js"></script>
 </body>
