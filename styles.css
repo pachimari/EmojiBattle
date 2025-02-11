@@ -1,0 +1,452 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', sans-serif;
+    line-height: 1.6;
+    background-color: #1a1a2e;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #00ff9d;
+    font-size: 2.5em;
+    margin: 20px 0;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+}
+
+.battle-arena {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 玩家区域样式 */
+.player {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 血条样式 */
+.health-bar {
+    height: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.health-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff9d, #00b8ff);
+    transition: width 0.3s ease;
+}
+
+.health-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 头像样式 */
+.player-avatar {
+    text-align: center;
+}
+
+.avatar-frame {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border: 4px solid #00ff9d;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+}
+
+.avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 属性面板样式 */
+.player-stats {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-stats h3 {
+    color: #00ff9d;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+/* 页签样式 */
+.stats-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 157, 0.3);
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+}
+
+.tab-btn:hover {
+    background: rgba(0, 255, 157, 0.1);
+}
+
+.tab-btn.active {
+    background: rgba(0, 255, 157, 0.2);
+    border-color: #00ff9d;
+}
+
+/* 页签内容样式 */
+.tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 157, 0.5) rgba(0, 0, 0, 0.2);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 157, 0.5);
+    border-radius: 3px;
+}
+
+.stats-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.stat-group {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.stat-group:last-child {
+    margin-bottom: 0;
+}
+
+.stat-group label {
+    color: #fff;
+    flex: 1;
+}
+
+.stat-input {
+    width: 80px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00ff9d;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    text-align: right;
+}
+
+.stat-input:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.percent-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.percent-input {
+    width: 60px;
+}
+
+.percent-symbol {
+    color: #00ff9d;
+    font-size: 0.9em;
+}
+
+.placeholder-text {
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* 玩家2的特殊样式 */
+.player-2 .tab-btn {
+    border-color: rgba(255, 107, 107, 0.3);
+}
+
+.player-2 .tab-btn:hover {
+    background: rgba(255, 107, 107, 0.1);
+}
+
+.player-2 .tab-btn.active {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: #ff6b6b;
+}
+
+.player-2 .player-stats h3 {
+    color: #ff6b6b;
+}
+
+.player-2 .stat-input {
+    border-color: #ff6b6b;
+}
+
+.player-2 .percent-symbol {
+    color: #ff6b6b;
+}
+
+.player-2 .tab-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 107, 107, 0.5);
+}
+
+/* 战斗信息区域样式 */
+.battle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+
+.battle-title {
+    text-align: center;
+}
+
+.battle-title h2 {
+    color: #00ff9d;
+    font-size: 1.8em;
+    text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+}
+
+.battle-log {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.battle-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 157, 0.5) rgba(0, 0, 0, 0.2);
+}
+
+/* 自定义滚动条样式 */
+.battle-text::-webkit-scrollbar {
+    width: 8px;
+}
+
+.battle-text::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.battle-text::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 157, 0.5);
+    border-radius: 4px;
+}
+
+.battle-text::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 157, 0.7);
+}
+
+.battle-message {
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.battle-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.battle-button {
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background: linear-gradient(45deg, #00ff9d, #00b8ff);
+    color: #1a1a2e;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 255, 157, 0.3);
+    flex: 1;
+    max-width: 200px;
+}
+
+.battle-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 157, 0.4);
+}
+
+.battle-button:active {
+    transform: translateY(1px);
+}
+
+.battle-button.reset {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.battle-button.reset:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.battle-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.name-inputs {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.name-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.name-input {
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00ff9d;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    width: 120px;
+}
+
+.battle-options {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.option-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.option-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.option-group input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.turns-input {
+    width: 60px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #00ff9d;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.hint {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9em;
+} 
