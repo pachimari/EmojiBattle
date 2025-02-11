@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmojiBattle</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EmojiBattle</h1>
+        </header>
+        
+        <main class="battle-arena">
+            <!-- 左侧玩家1 -->
+            <div class="player player-1">
+                <div class="health-bar">
+                    <div class="health-bar-fill" style="width: 100%"></div>
+                    <span class="health-text">100/100</span>
+                </div>
+                <div class="player-avatar">
+                    <div class="avatar-frame">
+                        <img id="player1Avatar" src="images/player1.png" alt="玩家1头像">
+                    </div>
+                </div>
+                <div class="player-stats">
+                    <h3>玩家属性</h3>
+                    <div class="stats-tabs">
+                        <button class="tab-btn active" data-tab="base">基础属性</button>
+                        <button class="tab-btn" data-tab="real">实时属性</button>
+                        <button class="tab-btn" data-tab="card">卡牌效果</button>
+                    </div>
+                    <!-- 基础属性页签 -->
+                    <div class="tab-content active" data-tab="base">
+                        <div class="stats-section">
+                            <div class="stat-group">
+                                <label>最大生命值：</label>
+                                <input type="number" class="stat-input" value="1000" data-stat="maxHp">
+                            </div>
+                            <div class="stat-group">
+                                <label>攻击力：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="attack">
+                            </div>
+                            <div class="stat-group">
+                                <label>防御力：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="defense">
+                            </div>
+                            <div class="stat-group">
+                                <label>四维：</label>
+                                <input type="number" class="stat-input" value="10" data-stat="fourDimensions">
+                            </div>
+                            <div class="stat-group">
+                                <label>速度：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="speed">
+                            </div>
+                            <div class="stat-group">
+                                <label>韧性：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="toughness">
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="critRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="penetrateRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>闪避率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="dodgeRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="blockRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="150" data-stat="critDamage">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="200" data-stat="penetrateDamage">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡效率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="50" data-stat="blockEfficiency">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>连击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="comboRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>伤害系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageCoefficient">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>承伤系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageTakenCoefficient">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 实时属性页签 -->
+                    <div class="tab-content" data-tab="real">
+                        <div class="stats-section">
+                            <div class="stat-group">
+                                <label>最大生命值：</label>
+                                <input type="number" class="stat-input" value="1000" data-stat="maxHp" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>攻击力：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="attack" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>防御力：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="defense" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>四维：</label>
+                                <input type="number" class="stat-input" value="10" data-stat="fourDimensions" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>速度：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="speed" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>韧性：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="toughness" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="critRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="penetrateRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>闪避率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="dodgeRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="blockRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="150" data-stat="critDamage" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="200" data-stat="penetrateDamage" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡效率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="50" data-stat="blockEfficiency" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>连击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="comboRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>伤害系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageCoefficient" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>承伤系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageTakenCoefficient" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡牌效果页签 -->
+                    <div class="tab-content" data-tab="card">
+                        <div class="stats-section">
+                            <p class="placeholder-text">暂无卡牌效果</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间战报区 -->
+            <div class="battle-info">
+                <div class="battle-title">
+                    <h2>战斗详情</h2>
+                </div>
+                <div class="battle-log">
+                    <div id="battleText" class="battle-text">
+                        <p class="battle-message">等待战斗开始...</p>
+                    </div>
+                </div>
+                <div class="battle-settings">
+                    <div class="name-inputs">
+                        <div class="name-input-group">
+                            <label>玩家1：</label>
+                            <input type="text" id="player1Name" value="👽" class="name-input">
+                        </div>
+                        <div class="name-input-group">
+                            <label>玩家2：</label>
+                            <input type="text" id="player2Name" value="💩" class="name-input">
+                        </div>
+                    </div>
+                    <div class="battle-options">
+                        <div class="option-group">
+                            <label>
+                                <input type="checkbox" id="showDamageReduction">
+                                显示减伤率
+                            </label>
+                        </div>
+                        <div class="option-group">
+                            <label>回合限制：</label>
+                            <input type="number" id="maxTurns" value="0" min="0" class="turns-input">
+                            <span class="hint">(0表示无限制)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="battle-controls">
+                    <button id="startBattle" class="battle-button">开始战斗</button>
+                    <button id="resetBattle" class="battle-button reset">重置战斗</button>
+                </div>
+            </div>
+
+            <!-- 右侧玩家2 -->
+            <div class="player player-2">
+                <div class="health-bar">
+                    <div class="health-bar-fill" style="width: 100%"></div>
+                    <span class="health-text">100/100</span>
+                </div>
+                <div class="player-avatar">
+                    <div class="avatar-frame">
+                        <img id="player2Avatar" src="images/player2.png" alt="玩家2头像">
+                    </div>
+                </div>
+                <div class="player-stats">
+                    <h3>玩家属性</h3>
+                    <div class="stats-tabs">
+                        <button class="tab-btn active" data-tab="base">基础属性</button>
+                        <button class="tab-btn" data-tab="real">实时属性</button>
+                        <button class="tab-btn" data-tab="card">卡牌效果</button>
+                    </div>
+                    <!-- 基础属性页签 -->
+                    <div class="tab-content active" data-tab="base">
+                        <div class="stats-section">
+                            <div class="stat-group">
+                                <label>最大生命值：</label>
+                                <input type="number" class="stat-input" value="1000" data-stat="maxHp">
+                            </div>
+                            <div class="stat-group">
+                                <label>攻击力：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="attack">
+                            </div>
+                            <div class="stat-group">
+                                <label>防御力：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="defense">
+                            </div>
+                            <div class="stat-group">
+                                <label>四维：</label>
+                                <input type="number" class="stat-input" value="10" data-stat="fourDimensions">
+                            </div>
+                            <div class="stat-group">
+                                <label>速度：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="speed">
+                            </div>
+                            <div class="stat-group">
+                                <label>韧性：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="toughness">
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="critRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="penetrateRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>闪避率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="dodgeRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="blockRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="150" data-stat="critDamage">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="200" data-stat="penetrateDamage">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡效率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="50" data-stat="blockEfficiency">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>连击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="comboRate">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>伤害系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageCoefficient">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>承伤系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageTakenCoefficient">
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 实时属性页签 -->
+                    <div class="tab-content" data-tab="real">
+                        <div class="stats-section">
+                            <div class="stat-group">
+                                <label>最大生命值：</label>
+                                <input type="number" class="stat-input" value="1000" data-stat="maxHp" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>攻击力：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="attack" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>防御力：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="defense" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>四维：</label>
+                                <input type="number" class="stat-input" value="10" data-stat="fourDimensions" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>速度：</label>
+                                <input type="number" class="stat-input" value="100" data-stat="speed" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>韧性：</label>
+                                <input type="number" class="stat-input" value="50" data-stat="toughness" disabled>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="critRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="penetrateRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>闪避率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="dodgeRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="15" data-stat="blockRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>暴击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="150" data-stat="critDamage" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>破击伤害：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="200" data-stat="penetrateDamage" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>格挡效率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="50" data-stat="blockEfficiency" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>连击率：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="0" data-stat="comboRate" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>伤害系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageCoefficient" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                            <div class="stat-group">
+                                <label>承伤系数：</label>
+                                <div class="percent-input-group">
+                                    <input type="number" class="stat-input percent-input" value="100" data-stat="damageTakenCoefficient" disabled>
+                                    <span class="percent-symbol">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 卡牌效果页签 -->
+                    <div class="tab-content" data-tab="card">
+                        <div class="stats-section">
+                            <p class="placeholder-text">暂无卡牌效果</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 
