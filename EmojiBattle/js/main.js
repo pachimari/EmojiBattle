@@ -2,6 +2,8 @@ import { Player } from './player.js';
 import { Battle } from './battle.js';
 import { UI } from './ui.js';
 import { TabManager } from './tabs.js';
+import { Card } from './card.js';
+import { CARD_CONFIGS } from './cardConfig.js';
 
 // 游戏主类
 class Game {
@@ -19,9 +21,129 @@ class Game {
         // 创建页签管理器
         this.tabManager = new TabManager();
         
+        // 初始化卡牌系统
+        this.initializeCards();
+        
         // 初始化游戏
         this.init();
     }
+
+    // 初始化卡牌系统
+    initializeCards() {
+        // 监听配置加载完成事件
+        document.addEventListener('cardConfigsLoaded', (event) => {
+            const cardList = document.querySelector('.card-list');
+            if (cardList) {
+                // 清空现有卡牌
+                cardList.innerHTML = '';
+                
+                // 创建卡牌
+                event.detail.forEach(cardConfig => {
+                    const card = new Card(cardConfig);
+                    const cardElement = card.createCardElement();
+                    cardList.appendChild(cardElement);
+                });
+            }
+
+            // 初始化玩家区域的拖放事件
+            this.initializePlayerDropZones();
+        });
+    }
+
+    // 初始化玩家区域的拖放事件
+    initializePlayerDropZones() {
+        const playerAreas = document.querySelectorAll('.player');
+        
+        playerAreas.forEach(area => {
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('drag-over');
+            });
+
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('drag-over');
+            });
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('drag-over');
+
+                const cardId = e.dataTransfer.getData('text/plain');
+                // 从CARD_CONFIGS中找到对应的配置
+                const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
+                
+                if (cardConfig) {
+                    // 获取目标玩家
+                    const playerId = area.classList.contains('player-1') ? 1 : 2;
+                    const player = playerId === 1 ? this.player1 : this.player2;
+
+                    // 获取卡牌页签内容
+                    const cardTab = area.querySelector('.tab-content[data-tab="card"] .stats-section');
+                    if (cardTab) {
+                        // 检查是否已存在相同的卡牌效果
+                        const existingEffect = cardTab.querySelector(`.card-effect[data-card-id="${cardId}"]`);
+                        if (existingEffect) {
+                            // 更新现有卡牌的计数
+                            const card = new Card(cardConfig);
+                            card.count = parseInt(existingEffect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1) + 1;
+                            existingEffect.replaceWith(card.createEffectElement(playerId));
+                        } else {
+                            // 创建新卡牌效果
+                            const card = new Card(cardConfig);
+                            cardTab.appendChild(card.createEffectElement(playerId));
+                        }
+
+                        // 为删除按钮添加事件监听器
+                        this.setupDeleteEffectListeners(cardTab, player);
+                    }
+
+                    // 应用卡牌效果
+                    const card = new Card(cardConfig);
+                    card.applyEffect(player);
+                }
+            });
+        });
+    }
+
+    // 设置卡牌效果删除按钮的事件监听器
+    setupDeleteEffectListeners(cardTab, player) {
+        const deleteButtons = cardTab.querySelectorAll('.delete-effect');
+        deleteButtons.forEach(button => {
+            if (!button.hasListener) {
+                button.addEventListener('click', () => {
+                    const effectDiv = button.closest('.card-effect');
+                    if (effectDiv) {
+                        // 移除卡牌效果显示
+                        effectDiv.remove();
+
+                        // 使用battle实例的方法重置属性并重新应用效果
+                        this.battle.resetPlayerRealStats(player);
+                        this.battle.reapplyAllCardEffects(player);
+                    }
+                });
+                button.hasListener = true;
+            }
+        });
+    }
+
+    // 重置玩家的实时属性为基础属性
+    resetPlayerRealStats(player) {
+        const baseStats = document.querySelector(`.player-${player.id} .tab-content[data-tab="base"]`);
+        const realStats = document.querySelector(`.player-${player.id} .tab-content[data-tab="real"]`);
+        
+        if (baseStats && realStats) {
+            const statInputs = baseStats.querySelectorAll('.stat-input');
+            statInputs.forEach(input => {
+                const statName = input.dataset.stat;
+                const realInput = realStats.querySelector(`.stat-input[data-stat="${statName}"]`);
+                if (realInput) {
+                    realInput.value = input.value;
+                    player.stats[statName] = parseInt(input.value);
+                }
+            });
+        }
+    }
+
 
     // 初始化
     init() {
@@ -88,12 +210,15 @@ class Game {
                         this.player2.name = player2NameInput.value || '玩家2';
                     }
 
-                    // 禁用输入
+                    // 禁用输入并切换到实时属性页签
                     this.ui.toggleInputs(true);
-                    
-                    // 切换到实时属性页签
                     document.querySelectorAll('.stats-tabs .tab-btn[data-tab="real"]').forEach(btn => {
                         btn.click();
+                    });
+                    
+                    // 禁用基础属性和卡牌页签
+                    document.querySelectorAll('.stats-tabs .tab-btn[data-tab="base"], .stats-tabs .tab-btn[data-tab="card"]').forEach(btn => {
+                        btn.disabled = true;
                     });
                     
                     // 同步基础属性到实时属性
@@ -111,6 +236,11 @@ class Game {
             resetButton.addEventListener('click', () => {
                 // 启用输入
                 this.ui.toggleInputs(false);
+                
+                // 启用所有页签
+                document.querySelectorAll('.stats-tabs .tab-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
                 
                 // 切换到基础属性页签
                 document.querySelectorAll('.stats-tabs .tab-btn[data-tab="base"]').forEach(btn => {

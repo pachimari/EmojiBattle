@@ -48,6 +48,21 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.player.drag-over::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px dashed #00ff9d;
+    border-radius: 10px;
+    background: rgba(0, 255, 157, 0.1);
+    pointer-events: none;
 }
 
 /* 血条样式 */
@@ -449,4 +464,128 @@ header h1 {
 .hint {
     color: rgba(255, 255, 255, 0.6);
     font-size: 0.9em;
+}
+
+/* 卡牌区域样式 */
+.card-area {
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+}
+
+.card-repository {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.card-repository h3 {
+    color: #00ff9d;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.card-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.card {
+    width: 120px;
+    height: 160px;
+    background: linear-gradient(45deg, #2a2a4a, #3a3a6a);
+    border: 2px solid #00ff9d;
+    border-radius: 8px;
+    cursor: grab;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 255, 157, 0.3);
+}
+
+.card-content {
+    padding: 10px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.card h4 {
+    color: #00ff9d;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.card p {
+    color: #fff;
+    font-size: 0.9em;
+}
+
+/* 卡牌效果显示样式 */
+.card-effect {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.card-effect-content {
+    flex: 1;
+}
+
+.card-effect h4 {
+    color: #00ff9d;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.card-effect p {
+    color: #fff;
+    font-size: 0.9em;
+}
+
+.delete-effect {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 5px;
+    transition: color 0.3s ease;
+}
+
+.delete-effect:hover {
+    color: #ff6b6b;
+}
+
+.player-2 .card-effect h4 {
+    color: #ff6b6b;
+}
+
+/* 禁用的页签按钮样式 */
+.tab-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* 确保实时属性输入框始终禁用 */
+.tab-content[data-tab="real"] .stat-input {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
 } 
