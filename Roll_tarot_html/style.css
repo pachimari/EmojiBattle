@@ -238,6 +238,7 @@ h1 {
     transition: all 0.3s ease;
     opacity: 0;
     visibility: hidden;
+    z-index: 1000;
 }
 
 .reroll-button:hover {
@@ -265,5 +266,151 @@ h1 {
     to {
         opacity: 1;
         transform: translate(-50%, 0);
+    }
+}
+
+/* 预测部分样式 */
+.prediction-section {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: rgba(26, 26, 46, 0.9);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.prediction-section.hidden {
+    display: none;
+}
+
+.input-container {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.question-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid rgba(233, 69, 96, 0.5);
+    border-radius: 10px;
+    font-size: 16px;
+    background: rgba(22, 33, 62, 0.8);
+    color: #fff;
+    transition: all 0.3s ease;
+    resize: none;
+    height: 60px;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+.question-input:focus {
+    outline: none;
+    border-color: #e94560;
+    box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+.question-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.char-counter {
+    position: absolute;
+    right: 10px;
+    bottom: -25px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.predict-button {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0 20px;
+    background: linear-gradient(45deg, #e94560, #ff758c);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+.predict-button:not(:disabled) {
+    opacity: 1;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+}
+
+.predict-button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+    background: linear-gradient(45deg, #ff758c, #e94560);
+}
+
+.predict-button:disabled {
+    cursor: not-allowed;
+    background: linear-gradient(45deg, #666, #888);
+}
+
+.prediction-result {
+    margin-top: 20px;
+    position: relative;
+}
+
+.prediction-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.prediction-loading.hidden {
+    display: none;
+}
+
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(233, 69, 96, 0.3);
+    border-top: 3px solid #e94560;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.prediction-output {
+    padding: 20px;
+    background: rgba(22, 33, 62, 0.8);
+    border-radius: 10px;
+    min-height: 100px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 确保在移动设备上也有良好的显示效果 */
+@media (max-width: 768px) {
+    .prediction-section {
+        margin: 15px;
+        padding: 15px;
+    }
+    
+    .question-input {
+        font-size: 14px;
+        padding: 12px;
+    }
+    
+    .predict-button {
+        padding: 10px;
+        font-size: 14px;
     }
 } 

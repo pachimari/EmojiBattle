@@ -19,6 +19,20 @@
             <!-- 卡片将由JavaScript动态生成 -->
         </div>
         <button id="rerollButton" class="reroll-button hidden">重新抽牌</button>
+        <div id="predictionSection" class="prediction-section hidden">
+            <div class="input-container">
+                <textarea id="questionInput" maxlength="15" placeholder="请输入你想问的问题（最多15个字）" class="question-input"></textarea>
+                <span class="char-counter">15</span>
+            </div>
+            <button id="predictButton" class="predict-button" disabled>开始预测</button>
+            <div class="prediction-result">
+                <div class="prediction-loading hidden">
+                    <div class="loading-spinner"></div>
+                    <span>正在生成预测...</span>
+                </div>
+                <div id="predictionOutput" class="prediction-output"></div>
+            </div>
+        </div>
         <div class="cards-info">
             <!-- 卡片信息将由JavaScript动态生成 -->
         </div>

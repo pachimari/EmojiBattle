@@ -104,7 +104,7 @@ def crawl_minor_arcana():
         "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Pents09.jpg/1200px-Pents09.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pents10.jpg/1200px-Pents10.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Pents11.jpg/1200px-Pents11.jpg",
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Pents12.jpg/1200px-Pents12.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Pents12.jpg/1200px-Pents12.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Pents13.jpg/1200px-Pents13.jpg",
         "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Pents14.jpg/1200px-Pents14.jpg",
     ]

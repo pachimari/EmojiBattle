@@ -482,6 +482,21 @@ const rerollButton = document.getElementById('rerollButton');
 // 状态变量
 let isTripleMode = false;
 let drawnCards = [];
+let availableCards = [...tarotCards]; // 添加可用卡牌数组
+
+// 重置可用卡牌
+function resetAvailableCards() {
+    availableCards = [...tarotCards];
+}
+
+// 从可用卡牌中随机抽取一张
+function getRandomCard() {
+    const index = Math.floor(Math.random() * availableCards.length);
+    const card = availableCards[index];
+    // 从可用卡牌中移除这张牌
+    availableCards.splice(index, 1);
+    return card;
+}
 
 // 创建卡片HTML
 function createCardHTML(index) {
@@ -522,6 +537,8 @@ function drawCard(index) {
             cardInfo.classList.add('hidden');
             cardElement.querySelector('.card-front img').style.transform = 'rotate(0deg)';
             drawnCards[index-1] = null;
+            // 将卡牌放回可用卡组
+            availableCards.push(drawnCards[index-1].card);
             checkAllCardsDrawn();
         }, 300);
         return;
@@ -530,7 +547,7 @@ function drawCard(index) {
         return;
     }
     
-    const card = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+    const card = getRandomCard();
     const isReversed = Math.random() < 0.5;
     
     const cardElement = document.getElementById(`tarotCard${index}`);
@@ -557,16 +574,41 @@ function drawCard(index) {
 // 检查是否所有卡牌都已翻开
 function checkAllCardsDrawn() {
     if (isTripleMode) {
-        const allDrawn = drawnCards.every(card => card !== null);
-        rerollButton.classList.toggle('hidden', !allDrawn);
+        const allDrawn = drawnCards.length === 3 && drawnCards.every(card => card !== null);
+        if (allDrawn) {
+            document.getElementById('predictionSection').classList.remove('hidden');
+            rerollButton.classList.remove('hidden');
+        } else {
+            document.getElementById('predictionSection').classList.add('hidden');
+            rerollButton.classList.add('hidden');
+        }
     } else {
         rerollButton.classList.add('hidden');
+        document.getElementById('predictionSection').classList.add('hidden');
     }
 }
 
 // 重置所有卡牌
 function rerollCards() {
     const cardCount = isTripleMode ? 3 : 1;
+    
+    // 隐藏预测区域和清空输入
+    const predictionSection = document.getElementById('predictionSection');
+    const questionInput = document.getElementById('questionInput');
+    const charCounter = document.querySelector('.char-counter');
+    const predictionOutput = document.getElementById('predictionOutput');
+    
+    predictionSection.classList.add('hidden');
+    if (questionInput) {
+        questionInput.value = '';
+        charCounter.textContent = '15';
+        charCounter.style.color = 'rgba(255, 255, 255, 0.7)';
+    }
+    if (predictionOutput) {
+        predictionOutput.textContent = '';
+    }
+    
+    // 重置卡片
     for (let i = 1; i <= cardCount; i++) {
         const cardElement = document.getElementById(`tarotCard${i}`);
         const cardInfo = document.getElementById(`cardInfo${i}`);
@@ -578,8 +620,14 @@ function rerollCards() {
             cardElement.querySelector('.card-front img').style.transform = 'rotate(0deg)';
         }, 300);
     }
+    
+    // 重置状态
     drawnCards = new Array(cardCount).fill(null);
+    resetAvailableCards(); // 重置可用卡牌
     rerollButton.classList.add('hidden');
+    
+    // 禁用预测按钮
+    document.getElementById('predictButton').disabled = true;
 }
 
 // 更新界面
@@ -602,16 +650,182 @@ function updateInterface() {
     
     // 重置抽牌状态
     drawnCards = new Array(cardCount).fill(null);
+    resetAvailableCards(); // 重置可用卡牌
     rerollButton.classList.add('hidden');
 }
 
 // 模式切换
 function switchMode(isTriple) {
     isTripleMode = isTriple;
-    singleModeBtn.classList.toggle('active', !isTriple);
-    tripleModeBtn.classList.toggle('active', isTriple);
-    document.querySelector('.container').classList.toggle('mode-triple', isTriple);
-    updateInterface();
+    const container = document.querySelector('.container');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cardsInfo = document.querySelector('.cards-info');
+    const predictionSection = document.getElementById('predictionSection');
+    
+    // 清空现有卡片
+    cardsContainer.innerHTML = '';
+    cardsInfo.innerHTML = '';
+    
+    // 重置卡片数组
+    resetAvailableCards();
+    
+    if (isTriple) {
+        container.classList.add('mode-triple');
+        document.getElementById('tripleMode').classList.add('active');
+        document.getElementById('singleMode').classList.remove('active');
+        predictionSection.classList.add('hidden');  // 初始隐藏预测区域
+        
+        // 创建三个卡片区域
+        for (let i = 1; i <= 3; i++) {
+            cardsContainer.innerHTML += createCardHTML(i);
+            cardsInfo.innerHTML += createCardInfoHTML(i);
+        }
+        
+        // 添加点击事件
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`tarotCard${i}`).addEventListener('click', () => drawCard(i));
+        }
+    } else {
+        container.classList.remove('mode-triple');
+        document.getElementById('singleMode').classList.add('active');
+        document.getElementById('tripleMode').classList.remove('active');
+        predictionSection.classList.add('hidden');  // 隐藏预测区域
+        
+        // 创建单个卡片区域
+        cardsContainer.innerHTML += createCardHTML(1);
+        cardsInfo.innerHTML += createCardInfoHTML(1);
+        
+        // 添加点击事件
+        document.getElementById('tarotCard1').addEventListener('click', () => drawCard(1));
+    }
+    
+    // 重置抽牌状态
+    drawnCards = new Array(isTriple ? 3 : 1).fill(null);
+    
+    // 隐藏重抽按钮
+    rerollButton.classList.add('hidden');
+    
+    // 添加输入框字数监听和预测按钮控制
+    const questionInput = document.getElementById('questionInput');
+    const charCounter = document.querySelector('.char-counter');
+    const predictButton = document.getElementById('predictButton');
+    
+    if (questionInput && charCounter) {
+        questionInput.value = ''; // 清空输入框
+        charCounter.textContent = '15'; // 重置字数计数
+        charCounter.style.color = 'rgba(255, 255, 255, 0.7)';
+        
+        // 移除之前的事件监听（如果有的话）
+        questionInput.removeEventListener('input', handleInput);
+        
+        // 添加新的事件监听
+        questionInput.addEventListener('input', handleInput);
+    }
+}
+
+// 处理输入事件
+function handleInput(event) {
+    const input = event.target;
+    const maxLength = 15;
+    const charCounter = document.querySelector('.char-counter');
+    const predictButton = document.getElementById('predictButton');
+    
+    // 获取输入的文本
+    let text = input.value;
+    
+    // 计算中文字符数
+    const chineseChars = text.match(/[\u4e00-\u9fa5]/g) || [];
+    const otherChars = text.replace(/[\u4e00-\u9fa5]/g, '').length;
+    const totalLength = chineseChars.length + otherChars;
+    
+    // 如果超过最大长度，截断文本
+    if (totalLength > maxLength) {
+        // 从开始逐个字符计算，直到达到最大长度
+        let newText = '';
+        let currentLength = 0;
+        for (let char of text) {
+            const isChineseChar = /[\u4e00-\u9fa5]/.test(char);
+            if (currentLength + (isChineseChar ? 1 : 1) <= maxLength) {
+                newText += char;
+                currentLength += isChineseChar ? 1 : 1;
+            } else {
+                break;
+            }
+        }
+        input.value = newText;
+        text = newText;
+    }
+    
+    // 更新计数器
+    const remainingChars = maxLength - totalLength;
+    charCounter.textContent = remainingChars;
+    charCounter.style.color = remainingChars < 5 ? '#e94560' : 'rgba(255, 255, 255, 0.7)';
+    
+    // 启用或禁用预测按钮
+    predictButton.disabled = totalLength === 0;
+}
+
+// 添加预测按钮点击事件
+document.getElementById('predictButton').addEventListener('click', async function() {
+    const questionInput = document.getElementById('questionInput');
+    const predictionLoading = document.querySelector('.prediction-loading');
+    const predictionOutput = document.getElementById('predictionOutput');
+    const predictButton = document.getElementById('predictButton');
+    
+    // 禁用预测按钮
+    predictButton.disabled = true;
+    
+    // 显示加载动画
+    predictionLoading.classList.remove('hidden');
+    predictionOutput.textContent = '';
+    
+    try {
+        // 准备发送给API的数据
+        const requestData = {
+            question: questionInput.value,
+            cards: drawnCards.map(card => ({
+                name: card.card.name,
+                meaning: card.isReversed ? card.card.reversedMeaning : card.card.meaning,
+                isReversed: card.isReversed
+            }))
+        };
+        
+        // 调用API
+        const response = await fetch('http://localhost:5000/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // 使用打字机效果显示结果
+            await typewriterEffect(predictionOutput, data.prediction);
+        } else {
+            throw new Error(data.error || '预测失败');
+        }
+    } catch (error) {
+        predictionOutput.textContent = `预测出错：${error.message}`;
+    } finally {
+        // 隐藏加载动画
+        predictionLoading.classList.add('hidden');
+        // 重新启用预测按钮
+        predictButton.disabled = false;
+    }
+});
+
+// 打字机效果函数
+async function typewriterEffect(element, text) {
+    element.textContent = '';
+    const speed = 50; // 每个字符的延迟（毫秒）
+    
+    for (let i = 0; i < text.length; i++) {
+        element.textContent += text[i];
+        await new Promise(resolve => setTimeout(resolve, speed));
+    }
 }
 
 // 事件监听
