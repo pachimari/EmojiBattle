@@ -189,6 +189,29 @@ class Game {
             });
         }
 
+        // 监听批量模式复选框
+        const batchModeCheckbox = document.getElementById('batchMode');
+        const batchOptions = document.querySelector('.batch-options');
+        if (batchModeCheckbox && batchOptions) {
+            batchModeCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    batchOptions.classList.add('show');
+                    // 添加一个小延迟以确保过渡效果正常显示
+                    requestAnimationFrame(() => {
+                        batchOptions.style.display = 'flex';
+                    });
+                } else {
+                    batchOptions.classList.remove('show');
+                    // 等待过渡效果完成后再隐藏元素
+                    setTimeout(() => {
+                        if (!batchModeCheckbox.checked) {
+                            batchOptions.style.display = 'none';
+                        }
+                    }, 300);
+                }
+            });
+        }
+
         // 绑定开始战斗按钮
         const startButton = document.getElementById('startBattle');
         if (startButton) {
@@ -210,22 +233,53 @@ class Game {
                         this.player2.name = player2NameInput.value || '玩家2';
                     }
 
-                    // 禁用输入并切换到实时属性页签
-                    this.ui.toggleInputs(true);
-                    document.querySelectorAll('.stats-tabs .tab-btn[data-tab="real"]').forEach(btn => {
-                        btn.click();
-                    });
-                    
-                    // 禁用基础属性和卡牌页签
-                    document.querySelectorAll('.stats-tabs .tab-btn[data-tab="base"], .stats-tabs .tab-btn[data-tab="card"]').forEach(btn => {
-                        btn.disabled = true;
-                    });
-                    
-                    // 同步基础属性到实时属性
-                    this.syncStatsToReal();
-                    
-                    // 开始战斗
-                    this.battle.start();
+                    // 检查是否为批量模式
+                    const batchModeCheckbox = document.getElementById('batchMode');
+                    if (batchModeCheckbox && batchModeCheckbox.checked) {
+                        // 获取批量战斗次数
+                        const batchTimesInput = document.getElementById('batchTimes');
+                        const times = batchTimesInput ? parseInt(batchTimesInput.value) || 100 : 100;
+                        
+                        // 设置为批量模式
+                        this.battle.isBatchMode = true;
+                        
+                        // 禁用输入并切换到实时属性页签
+                        this.ui.toggleInputs(true);
+                        document.querySelectorAll('.stats-tabs .tab-btn[data-tab="real"]').forEach(btn => {
+                            btn.click();
+                        });
+                        
+                        // 禁用基础属性和卡牌页签
+                        document.querySelectorAll('.stats-tabs .tab-btn[data-tab="base"], .stats-tabs .tab-btn[data-tab="card"]').forEach(btn => {
+                            btn.disabled = true;
+                        });
+                        
+                        // 同步基础属性到实时属性
+                        this.syncStatsToReal();
+                        
+                        // 开始批量战斗
+                        this.battle.startBatchBattle(times);
+                    } else {
+                        // 单次战斗模式
+                        this.battle.isBatchMode = false;
+                        
+                        // 禁用输入并切换到实时属性页签
+                        this.ui.toggleInputs(true);
+                        document.querySelectorAll('.stats-tabs .tab-btn[data-tab="real"]').forEach(btn => {
+                            btn.click();
+                        });
+                        
+                        // 禁用基础属性和卡牌页签
+                        document.querySelectorAll('.stats-tabs .tab-btn[data-tab="base"], .stats-tabs .tab-btn[data-tab="card"]').forEach(btn => {
+                            btn.disabled = true;
+                        });
+                        
+                        // 同步基础属性到实时属性
+                        this.syncStatsToReal();
+                        
+                        // 开始单次战斗
+                        this.battle.start();
+                    }
                 }
             });
         }

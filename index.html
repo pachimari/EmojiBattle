@@ -265,16 +265,33 @@
                         </div>
                     </div>
                     <div class="battle-options">
-                        <div class="option-group">
-                            <label>
-                                <input type="checkbox" id="showDamageReduction">
-                                显示减伤率
-                            </label>
+                        <div class="option-row">
+                            <div class="option-group">
+                                <label>
+                                    <input type="checkbox" id="showDamageReduction">
+                                    显示减伤率
+                                </label>
+                            </div>
+                            <div class="option-group">
+                                <label>回合限制：</label>
+                                <input type="number" id="maxTurns" value="0" min="0" class="turns-input">
+                                <span class="hint">(0表示无限制)</span>
+                            </div>
                         </div>
-                        <div class="option-group">
-                            <label>回合限制：</label>
-                            <input type="number" id="maxTurns" value="0" min="0" class="turns-input">
-                            <span class="hint">(0表示无限制)</span>
+                        <div class="option-row">
+                            <div class="option-group">
+                                <label>
+                                    <input type="checkbox" id="batchMode">
+                                    批量模式
+                                </label>
+                            </div>
+                        </div>
+                        <div class="option-row batch-options">
+                            <div class="option-group">
+                                <label>战斗次数：</label>
+                                <input type="number" id="batchTimes" value="100" min="1" max="1000" class="turns-input">
+                                <span class="hint">(1-1000次)</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -527,5 +544,25 @@
         </div>
     </div>
     <script type="module" src="js/main.js"></script>
+    
+    <!-- 数字输入面板 -->
+    <div class="number-pad" id="numberPad">
+        <button>7</button>
+        <button>8</button>
+        <button>9</button>
+        <button>4</button>
+        <button>5</button>
+        <button>6</button>
+        <button>1</button>
+        <button>2</button>
+        <button>3</button>
+        <button>0</button>
+        <button>00</button>
+        <button class="backspace">←</button>
+        <div class="action-buttons">
+            <button class="clear">清除</button>
+            <button class="confirm">确定</button>
+        </div>
+    </div>
 </body>
 </html> 

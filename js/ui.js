@@ -2,6 +2,74 @@
 export class UI {
     constructor() {
         this.setupEventListeners();
+        this.setupNumberPad();
+    }
+
+    // 设置数字输入面板
+    setupNumberPad() {
+        const numberPad = document.getElementById('numberPad');
+        let currentInput = null;
+
+        // 监听所有数字输入框的点击事件
+        document.querySelectorAll('.stat-input').forEach(input => {
+            input.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentInput = input;
+                
+                // 定位数字面板
+                const rect = input.getBoundingClientRect();
+                numberPad.style.top = `${rect.bottom + 5}px`;
+                numberPad.style.left = `${rect.right}px`;
+                
+                // 显示数字面板
+                numberPad.classList.add('show');
+                
+                // 设置当前值
+                currentInput.dataset.tempValue = currentInput.value;
+            });
+        });
+
+        // 监听数字按钮点击
+        numberPad.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!currentInput) return;
+
+                const value = button.textContent;
+                
+                if (value === '清除') {
+                    currentInput.value = '';
+                    currentInput.dataset.tempValue = '';
+                } else if (value === '确定') {
+                    // 触发change事件
+                    currentInput.dispatchEvent(new Event('change'));
+                    // 隐藏数字面板
+                    numberPad.classList.remove('show');
+                    currentInput = null;
+                } else if (value === '←') {
+                    // 退位键处理
+                    currentInput.value = currentInput.value.slice(0, -1);
+                } else {
+                    // 追加数字
+                    currentInput.value = (currentInput.value || '') + value;
+                }
+            });
+        });
+
+        // 点击其他区域时隐藏数字面板
+        document.addEventListener('click', () => {
+            if (currentInput) {
+                // 恢复之前的值
+                currentInput.value = currentInput.dataset.tempValue || '';
+                numberPad.classList.remove('show');
+                currentInput = null;
+            }
+        });
+
+        // 阻止数字面板自身的点击事件冒泡
+        numberPad.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
 
     // 设置事件监听

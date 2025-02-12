@@ -14,10 +14,17 @@ export class Battle {
         this.maxTurns = 0;
         this.showDamageReduction = false; // 默认不显示减伤率
         this.skipNextTurn = null; // 记录下一回合需要跳过出手的玩家
+        this.isBatchMode = false; // 新增：是否为批量模式
+        this.batchResults = []; // 新增：批量模式的结果记录
+        this.lastFirstAttacker = null; // 新增：记录上一场战斗的先手玩家
     }
 
     // 开始战斗
     start() {
+        if (this.isBatchMode) {
+            return this.startBatchBattle();
+        }
+
         this.isOngoing = true;
         this.battleLog = [];
         this.currentTurn = 0;
@@ -50,10 +57,22 @@ export class Battle {
     }
 
     // 重置战斗
-    reset() {
+    reset(keepLog = false) {
         this.isOngoing = false;
-        this.battleLog = [];
+        if (!keepLog) {
+            this.battleLog = [];
+            // 清空战斗日志
+            const battleText = document.getElementById('battleText');
+            if (battleText) {
+                battleText.innerHTML = '<p class="battle-message">等待战斗开始...</p>';
+            }
+        }
         this.currentTurn = 0;
+        
+        // 在非批量模式下重置lastFirstAttacker
+        if (!this.isBatchMode) {
+            this.lastFirstAttacker = null;
+        }
         
         // 重置玩家状态
         this.player1.reset();
@@ -66,12 +85,6 @@ export class Battle {
         // 然后重新应用所有卡牌效果
         this.reapplyAllCardEffects(this.player1);
         this.reapplyAllCardEffects(this.player2);
-        
-        // 清空战斗日志
-        const battleText = document.getElementById('battleText');
-        if (battleText) {
-            battleText.innerHTML = '<p class="battle-message">等待战斗开始...</p>';
-        }
     }
 
     // 重置玩家的实时属性为基础属性
@@ -323,8 +336,21 @@ export class Battle {
         this.addLog(`第 ${this.currentTurn} 回合`);
 
         // 确定先后手
-        const firstPlayer = this.player1.stats.speed >= this.player2.stats.speed ? this.player1 : this.player2;
+        let firstPlayer;
+        if (this.player1.stats.speed === this.player2.stats.speed) {
+            // 速度相等时，根据上一场战斗结果轮换先手
+            if (this.lastFirstAttacker === this.player2 || this.lastFirstAttacker === null) {
+                firstPlayer = this.player1;
+            } else {
+                firstPlayer = this.player2;
+            }
+        } else {
+            firstPlayer = this.player1.stats.speed > this.player2.stats.speed ? this.player1 : this.player2;
+        }
         const secondPlayer = firstPlayer === this.player1 ? this.player2 : this.player1;
+        
+        // 记录本场战斗的先手玩家
+        this.lastFirstAttacker = firstPlayer;
 
         // 先手玩家的攻击回合
         if (this.skipNextTurn === firstPlayer) {
@@ -413,14 +439,40 @@ export class Battle {
 
     // 添加战斗日志
     addLog(message) {
-        this.battleLog.push(message);
-        const battleText = document.getElementById('battleText');
-        if (battleText) {
-            const p = document.createElement('p');
-            p.className = 'battle-message';
-            p.textContent = message;
-            battleText.appendChild(p);
-            battleText.scrollTop = battleText.scrollHeight;
+        if (this.isBatchMode) {
+            // 在批量模式下，显示以下类型的消息
+            if (message.includes('开始') || 
+                message.includes('第') || 
+                message.includes('战斗统计') || 
+                message.includes('总场次') || 
+                message.includes('胜场') || 
+                message.includes('平局') ||
+                message.includes('平均') ||
+                message.includes('血量') ||
+                message.includes('胜利时') ||
+                message.includes('失败时') ||
+                message === '------------------------') {
+                
+                this.battleLog.push(message);
+                const battleText = document.getElementById('battleText');
+                if (battleText) {
+                    const p = document.createElement('p');
+                    p.className = 'battle-message';
+                    p.textContent = message;
+                    battleText.appendChild(p);
+                    battleText.scrollTop = battleText.scrollHeight;
+                }
+            }
+        } else {
+            this.battleLog.push(message);
+            const battleText = document.getElementById('battleText');
+            if (battleText) {
+                const p = document.createElement('p');
+                p.className = 'battle-message';
+                p.textContent = message;
+                battleText.appendChild(p);
+                battleText.scrollTop = battleText.scrollHeight;
+            }
         }
     }
 
@@ -435,5 +487,164 @@ export class Battle {
         } else {
             this.addLog(`战斗结束！${winner.name} 获胜！`);
         }
+    }
+
+    // 新增：开始批量战斗
+    async startBatchBattle(times = 100) {
+        this.isBatchMode = true;
+        this.batchResults = [];
+        let player1Wins = 0;
+        let player2Wins = 0;
+        let draws = 0;
+
+        // 胜利时的血量统计
+        let player1WinningHpTotal = 0;
+        let player2WinningHpTotal = 0;
+
+        // 清空战斗日志
+        const battleText = document.getElementById('battleText');
+        if (battleText) {
+            battleText.innerHTML = '';
+        }
+
+        this.addLog(`开始${times}次战斗模拟...`);
+        this.addLog('------------------------');
+
+        for (let i = 0; i < times; i++) {
+            // 重置玩家状态
+            this.reset(true); // 传入true表示不清空战斗日志
+            
+            // 进行一场战斗
+            const result = await this.runSingleBattle();
+            
+            // 计算剩余血量百分比
+            const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
+            const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
+            
+            // 根据胜负情况统计血量
+            if (result.winner === this.player1) {
+                player1Wins++;
+                player1WinningHpTotal += hp1Percent;
+            } else if (result.winner === this.player2) {
+                player2Wins++;
+                player2WinningHpTotal += hp2Percent;
+            } else {
+                draws++;
+            }
+            
+            // 记录结果
+            this.batchResults.push({
+                ...result,
+                hp1Percent,
+                hp2Percent
+            });
+
+            // 输出简要战斗结果
+            this.addLog(`第${i + 1}场: ${result.winner ? result.winner.name + '胜利' : '平局'} | ` +
+                       `回合: ${result.turns} | ` +
+                       `${this.player1.name}血量: ${hp1Percent.toFixed(1)}% | ` +
+                       `${this.player2.name}血量: ${hp2Percent.toFixed(1)}%`);
+        }
+
+        // 计算平均剩余血量
+        const avgHp1WinningPercent = player1Wins > 0 ? player1WinningHpTotal / player1Wins : 0;
+        const avgHp2WinningPercent = player2Wins > 0 ? player2WinningHpTotal / player2Wins : 0;
+
+        // 输出总体统计
+        const totalStats = {
+            total: times,
+            player1Wins,
+            player2Wins,
+            draws,
+            player1WinRate: (player1Wins / times * 100).toFixed(2),
+            player2WinRate: (player2Wins / times * 100).toFixed(2),
+            drawRate: (draws / times * 100).toFixed(2)
+        };
+
+        this.addLog('------------------------');
+        this.addLog('战斗统计：');
+        this.addLog(`总场次: ${totalStats.total}`);
+        this.addLog(`${this.player1.name} 胜场: ${totalStats.player1Wins} (${totalStats.player1WinRate}%)`);
+        this.addLog(`${this.player2.name} 胜场: ${totalStats.player2Wins} (${totalStats.player2WinRate}%)`);
+        this.addLog(`平局场次: ${totalStats.draws} (${totalStats.drawRate}%)`);
+        this.addLog(`平均回合数: ${(this.batchResults.reduce((sum, r) => sum + r.turns, 0) / times).toFixed(1)}`);
+        this.addLog('------------------------');
+        this.addLog('平均剩余血量:');
+        this.addLog(`${this.player1.name}:`);
+        this.addLog(`  ${this.player1.name} 胜利时: ${avgHp1WinningPercent.toFixed(1)}%`);
+        this.addLog(`  ${this.player1.name} 失败时: 0.0%`);
+        this.addLog(`${this.player2.name}:`);
+        this.addLog(`  ${this.player2.name} 胜利时: ${avgHp2WinningPercent.toFixed(1)}%`);
+        this.addLog(`  ${this.player2.name} 失败时: 0.0%`);
+        this.addLog('------------------------');
+
+        this.isBatchMode = false;
+        return totalStats;
+    }
+
+    // 新增：运行单场战斗（无延迟版本）
+    async runSingleBattle() {
+        this.isOngoing = true;
+        this.currentTurn = 0;
+
+        // 重置玩家状态但保留卡牌效果
+        this.resetWithCardEffects(this.player1);
+        this.resetWithCardEffects(this.player2);
+
+        // 应用战斗开始时的效果
+        this.applyBattleStartEffects(this.player1, this.player2);
+        this.applyBattleStartEffects(this.player2, this.player1);
+
+        while (this.isOngoing) {
+            this.currentTurn++;
+
+            // 确定先后手
+            const firstPlayer = this.player1.stats.speed >= this.player2.stats.speed ? this.player1 : this.player2;
+            const secondPlayer = firstPlayer === this.player1 ? this.player2 : this.player1;
+
+            // 处理先手玩家的回合
+            if (this.skipNextTurn !== firstPlayer) {
+                const result = this.processAttack(firstPlayer, secondPlayer, false);
+                if (result.isDefeated) {
+                    return { winner: firstPlayer, turns: this.currentTurn };
+                }
+                if (result.hasCombo) {
+                    this.skipNextTurn = secondPlayer;
+                    continue;
+                }
+            } else {
+                this.skipNextTurn = null;
+            }
+
+            // 处理后手玩家的回合
+            if (this.skipNextTurn !== secondPlayer) {
+                const result = this.processAttack(secondPlayer, firstPlayer, false);
+                if (result.isDefeated) {
+                    return { winner: secondPlayer, turns: this.currentTurn };
+                }
+                if (result.hasCombo) {
+                    this.skipNextTurn = firstPlayer;
+                    continue;
+                }
+            } else {
+                this.skipNextTurn = null;
+            }
+
+            // 检查回合数限制
+            if (this.maxTurns > 0 && this.currentTurn >= this.maxTurns) {
+                const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
+                const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
+                
+                if (hp1Percent > hp2Percent) {
+                    return { winner: this.player1, turns: this.currentTurn };
+                } else if (hp2Percent > hp1Percent) {
+                    return { winner: this.player2, turns: this.currentTurn };
+                } else {
+                    return { winner: null, turns: this.currentTurn }; // 平局
+                }
+            }
+        }
+
+        return { winner: null, turns: this.currentTurn }; // 平局
     }
 } 
