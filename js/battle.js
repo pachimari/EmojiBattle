@@ -17,6 +17,11 @@ export class Battle {
         this.isBatchMode = false; // 新增：是否为批量模式
         this.batchResults = []; // 新增：批量模式的结果记录
         this.lastFirstAttacker = null; // 新增：记录上一场战斗的先手玩家
+        // 新增：记录当前战斗中的伤害统计
+        this.currentBattleDamage = {
+            player1: 0,
+            player2: 0
+        };
     }
 
     // 开始战斗
@@ -284,6 +289,21 @@ export class Battle {
         
         const actualDamage = defender.takeDamage(result.damage);
 
+        // 新增：记录伤害
+        if (attacker === this.player1) {
+            this.currentBattleDamage.player1 += actualDamage;
+            console.log('玩家1造成伤害:', {
+                actualDamage,
+                currentTotal: this.currentBattleDamage.player1
+            });
+        } else {
+            this.currentBattleDamage.player2 += actualDamage;
+            console.log('玩家2造成伤害:', {
+                actualDamage,
+                currentTotal: this.currentBattleDamage.player2
+            });
+        }
+
         // 构建战报消息
         let message = `${attacker.name} 攻击 ${defender.name}`;
         
@@ -451,8 +471,10 @@ export class Battle {
                 message.includes('血量') ||
                 message.includes('胜利时') ||
                 message.includes('失败时') ||
+                message.includes('平均伤害') ||
                 message === '------------------------') {
                 
+                console.log('显示消息:', message);
                 this.battleLog.push(message);
                 const battleText = document.getElementById('battleText');
                 if (battleText) {
@@ -462,6 +484,8 @@ export class Battle {
                     battleText.appendChild(p);
                     battleText.scrollTop = battleText.scrollHeight;
                 }
+            } else {
+                console.log('过滤掉的消息:', message);
             }
         } else {
             this.battleLog.push(message);
@@ -501,6 +525,10 @@ export class Battle {
         let player1WinningHpTotal = 0;
         let player2WinningHpTotal = 0;
 
+        // 新增：总伤害统计
+        let player1TotalDamage = 0;
+        let player2TotalDamage = 0;
+
         // 清空战斗日志
         const battleText = document.getElementById('battleText');
         if (battleText) {
@@ -509,17 +537,32 @@ export class Battle {
 
         this.addLog(`开始${times}次战斗模拟...`);
         this.addLog('------------------------');
+        console.log('开始批量战斗，初始化伤害统计：', { player1TotalDamage, player2TotalDamage });
 
         for (let i = 0; i < times; i++) {
             // 重置玩家状态
-            this.reset(true); // 传入true表示不清空战斗日志
+            this.reset(true);
             
             // 进行一场战斗
             const result = await this.runSingleBattle();
+            console.log(`第${i + 1}场战斗结果:`, {
+                damage: result.damage,
+                currentBattleDamage: this.currentBattleDamage
+            });
             
             // 计算剩余血量百分比
             const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
             const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
+            
+            // 累加伤害统计
+            player1TotalDamage += result.damage.player1;
+            player2TotalDamage += result.damage.player2;
+            console.log(`累计伤害统计:`, {
+                player1TotalDamage,
+                player2TotalDamage,
+                avgPlayer1Damage: player1TotalDamage / (i + 1),
+                avgPlayer2Damage: player2TotalDamage / (i + 1)
+            });
             
             // 根据胜负情况统计血量
             if (result.winner === this.player1) {
@@ -536,7 +579,9 @@ export class Battle {
             this.batchResults.push({
                 ...result,
                 hp1Percent,
-                hp2Percent
+                hp2Percent,
+                player1Damage: result.damage.player1,
+                player2Damage: result.damage.player2
             });
 
             // 输出简要战斗结果
@@ -550,6 +595,18 @@ export class Battle {
         const avgHp1WinningPercent = player1Wins > 0 ? player1WinningHpTotal / player1Wins : 0;
         const avgHp2WinningPercent = player2Wins > 0 ? player2WinningHpTotal / player2Wins : 0;
 
+        // 计算平均伤害
+        const avgPlayer1Damage = player1TotalDamage / times;
+        const avgPlayer2Damage = player2TotalDamage / times;
+        console.log('最终平均伤害计算结果:', {
+            avgPlayer1Damage,
+            avgPlayer2Damage,
+            totalStats: {
+                avgPlayer1Damage: Math.round(avgPlayer1Damage),
+                avgPlayer2Damage: Math.round(avgPlayer2Damage)
+            }
+        });
+
         // 输出总体统计
         const totalStats = {
             total: times,
@@ -558,7 +615,9 @@ export class Battle {
             draws,
             player1WinRate: (player1Wins / times * 100).toFixed(2),
             player2WinRate: (player2Wins / times * 100).toFixed(2),
-            drawRate: (draws / times * 100).toFixed(2)
+            drawRate: (draws / times * 100).toFixed(2),
+            avgPlayer1Damage: Math.round(avgPlayer1Damage),
+            avgPlayer2Damage: Math.round(avgPlayer2Damage)
         };
 
         this.addLog('------------------------');
@@ -577,6 +636,10 @@ export class Battle {
         this.addLog(`  ${this.player2.name} 胜利时: ${avgHp2WinningPercent.toFixed(1)}%`);
         this.addLog(`  ${this.player2.name} 失败时: 0.0%`);
         this.addLog('------------------------');
+        this.addLog('平均伤害: ');
+        this.addLog(`${this.player1.name}平均伤害: ${totalStats.avgPlayer1Damage}`);
+        this.addLog(`${this.player2.name}平均伤害: ${totalStats.avgPlayer2Damage}`);
+        this.addLog('------------------------');
 
         this.isBatchMode = false;
         return totalStats;
@@ -586,6 +649,9 @@ export class Battle {
     async runSingleBattle() {
         this.isOngoing = true;
         this.currentTurn = 0;
+        
+        // 重置伤害统计
+        this.currentBattleDamage = { player1: 0, player2: 0 };
 
         // 重置玩家状态但保留卡牌效果
         this.resetWithCardEffects(this.player1);
@@ -606,7 +672,11 @@ export class Battle {
             if (this.skipNextTurn !== firstPlayer) {
                 const result = this.processAttack(firstPlayer, secondPlayer, false);
                 if (result.isDefeated) {
-                    return { winner: firstPlayer, turns: this.currentTurn };
+                    return { 
+                        winner: firstPlayer, 
+                        turns: this.currentTurn,
+                        damage: { ...this.currentBattleDamage }
+                    };
                 }
                 if (result.hasCombo) {
                     this.skipNextTurn = secondPlayer;
@@ -620,7 +690,11 @@ export class Battle {
             if (this.skipNextTurn !== secondPlayer) {
                 const result = this.processAttack(secondPlayer, firstPlayer, false);
                 if (result.isDefeated) {
-                    return { winner: secondPlayer, turns: this.currentTurn };
+                    return { 
+                        winner: secondPlayer, 
+                        turns: this.currentTurn,
+                        damage: { ...this.currentBattleDamage }
+                    };
                 }
                 if (result.hasCombo) {
                     this.skipNextTurn = firstPlayer;
@@ -636,15 +710,31 @@ export class Battle {
                 const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
                 
                 if (hp1Percent > hp2Percent) {
-                    return { winner: this.player1, turns: this.currentTurn };
+                    return { 
+                        winner: this.player1, 
+                        turns: this.currentTurn,
+                        damage: { ...this.currentBattleDamage }
+                    };
                 } else if (hp2Percent > hp1Percent) {
-                    return { winner: this.player2, turns: this.currentTurn };
+                    return { 
+                        winner: this.player2, 
+                        turns: this.currentTurn,
+                        damage: { ...this.currentBattleDamage }
+                    };
                 } else {
-                    return { winner: null, turns: this.currentTurn }; // 平局
+                    return { 
+                        winner: null, 
+                        turns: this.currentTurn,
+                        damage: { ...this.currentBattleDamage }
+                    }; // 平局
                 }
             }
         }
 
-        return { winner: null, turns: this.currentTurn }; // 平局
+        return { 
+            winner: null, 
+            turns: this.currentTurn,
+            damage: { ...this.currentBattleDamage }
+        }; // 平局
     }
 } 
