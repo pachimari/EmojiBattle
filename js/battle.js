@@ -22,6 +22,9 @@ export class Battle {
             player1: 0,
             player2: 0
         };
+        // 新增：日志缓冲区
+        this.logBuffer = [];
+        this.batchProgress = 0;
     }
 
     // 开始战斗
@@ -287,58 +290,61 @@ export class Battle {
         // 应用攻击后的效果
         this.applyPostAttackEffects(attacker, defender, result);
         
-        const actualDamage = defender.takeDamage(result.damage);
+        // 在批量模式下跳过UI更新
+        const actualDamage = this.isBatchMode ? 
+            result.damage : 
+            defender.takeDamage(result.damage);
+
+        // 如果是批量模式，手动更新生命值
+        if (this.isBatchMode) {
+            defender.stats.currentHp = Math.max(0, defender.stats.currentHp - result.damage);
+        }
 
         // 新增：记录伤害
         if (attacker === this.player1) {
             this.currentBattleDamage.player1 += actualDamage;
-            console.log('玩家1造成伤害:', {
-                actualDamage,
-                currentTotal: this.currentBattleDamage.player1
-            });
         } else {
             this.currentBattleDamage.player2 += actualDamage;
-            console.log('玩家2造成伤害:', {
-                actualDamage,
-                currentTotal: this.currentBattleDamage.player2
-            });
         }
 
-        // 构建战报消息
-        let message = `${attacker.name} 攻击 ${defender.name}`;
-        
-        // 添加攻击方效果
-        const attackerEffects = result.effects.filter(effect => ['crit', 'penetrate', 'combo'].includes(effect));
-        if (attackerEffects.length > 0) {
-            message += '（';
-            message += attackerEffects.map(effect => {
-                switch (effect) {
-                    case 'crit': return '暴击💥';
-                    case 'penetrate': return '破击🤯';
-                    case 'combo': return '连击⚔';
-                }
-            }).join('，');
-            message += '）';
-        }
+        // 在非批量模式下才构建详细战报
+        if (!this.isBatchMode) {
+            // 构建战报消息
+            let message = `${attacker.name} 攻击 ${defender.name}`;
+            
+            // 添加攻击方效果
+            const attackerEffects = result.effects.filter(effect => ['crit', 'penetrate', 'combo'].includes(effect));
+            if (attackerEffects.length > 0) {
+                message += '（';
+                message += attackerEffects.map(effect => {
+                    switch (effect) {
+                        case 'crit': return '暴击💥';
+                        case 'penetrate': return '破击🤯';
+                        case 'combo': return '连击⚔';
+                    }
+                }).join('，');
+                message += '）';
+            }
 
-        // 添加防守方效果
-        const defenderEffects = result.effects.filter(effect => ['dodge', 'block'].includes(effect));
-        if (defenderEffects.length > 0) {
-            message += `，${defender.name}（`;
-            message += defenderEffects.map(effect => {
-                switch (effect) {
-                    case 'dodge': return '闪避💨';
-                    case 'block': return '格挡🛡';
-                }
-            }).join('，');
-            message += '）';
-        }
+            // 添加防守方效果
+            const defenderEffects = result.effects.filter(effect => ['dodge', 'block'].includes(effect));
+            if (defenderEffects.length > 0) {
+                message += `，${defender.name}（`;
+                message += defenderEffects.map(effect => {
+                    switch (effect) {
+                        case 'dodge': return '闪避💨';
+                        case 'block': return '格挡🛡';
+                    }
+                }).join('，');
+                message += '）';
+            }
 
-        message += `，造成 ${actualDamage} 点伤害！`;
-        this.addLog(message);
+            message += `，造成 ${actualDamage} 点伤害！`;
+            this.addLog(message);
 
-        if (this.showDamageReduction) {
-            this.addLog(`减伤率：${defender.calculateDamageReduction(attacker).toFixed(2)}%`);
+            if (this.showDamageReduction) {
+                this.addLog(`减伤率：${defender.calculateDamageReduction(attacker).toFixed(2)}%`);
+            }
         }
 
         // 返回包含是否触发连击的信息
@@ -460,34 +466,40 @@ export class Battle {
     // 添加战斗日志
     addLog(message) {
         if (this.isBatchMode) {
-            // 在批量模式下，显示以下类型的消息
+            // 在批量模式下，先将日志添加到缓冲区
             if (message.includes('开始') || 
-                message.includes('第') || 
                 message.includes('战斗统计') || 
                 message.includes('总场次') || 
                 message.includes('胜场') || 
                 message.includes('平局') ||
-                message.includes('平均') ||
-                message.includes('血量') ||
+                message.includes('平均回合') ||
+                message.includes('血量:') ||
                 message.includes('胜利时') ||
                 message.includes('失败时') ||
                 message.includes('平均伤害') ||
-                message === '------------------------') {
+                message === '------------------------' ||
+                // 每10场显示一次进度
+                (message.startsWith('第') && message.includes('场:'))) {
                 
-                console.log('显示消息:', message);
-                this.battleLog.push(message);
-                const battleText = document.getElementById('battleText');
-                if (battleText) {
-                    const p = document.createElement('p');
-                    p.className = 'battle-message';
-                    p.textContent = message;
-                    battleText.appendChild(p);
-                    battleText.scrollTop = battleText.scrollHeight;
+                this.logBuffer.push(message);
+                
+                // 如果是进度消息，立即显示
+                if (message.startsWith('第') && message.includes('场:')) {
+                    const battleText = document.getElementById('battleText');
+                    if (battleText) {
+                        // 使用DocumentFragment优化DOM操作
+                        const fragment = document.createDocumentFragment();
+                        const p = document.createElement('p');
+                        p.className = 'battle-message';
+                        p.textContent = message;
+                        fragment.appendChild(p);
+                        battleText.appendChild(fragment);
+                        battleText.scrollTop = battleText.scrollHeight;
+                    }
                 }
-            } else {
-                console.log('过滤掉的消息:', message);
             }
         } else {
+            // 非批量模式下保持原有逻辑
             this.battleLog.push(message);
             const battleText = document.getElementById('battleText');
             if (battleText) {
@@ -498,6 +510,27 @@ export class Battle {
                 battleText.scrollTop = battleText.scrollHeight;
             }
         }
+    }
+
+    // 批量显示缓冲区中的日志
+    flushLogBuffer() {
+        if (this.logBuffer.length === 0) return;
+
+        const battleText = document.getElementById('battleText');
+        if (battleText) {
+            const fragment = document.createDocumentFragment();
+            this.logBuffer.forEach(message => {
+                const p = document.createElement('p');
+                p.className = 'battle-message';
+                p.textContent = message;
+                fragment.appendChild(p);
+            });
+            battleText.appendChild(fragment);
+            battleText.scrollTop = battleText.scrollHeight;
+        }
+        
+        // 清空缓冲区
+        this.logBuffer = [];
     }
 
     // 结束战斗
@@ -521,6 +554,13 @@ export class Battle {
         let player2Wins = 0;
         let draws = 0;
 
+        // 显示进度条
+        const progressBar = document.querySelector('.battle-progress');
+        const progressFill = document.querySelector('.progress-fill');
+        const progressText = document.getElementById('progressText');
+        const currentBattle = document.getElementById('currentBattle');
+        if (progressBar) progressBar.style.display = 'block';
+
         // 胜利时的血量统计
         let player1WinningHpTotal = 0;
         let player2WinningHpTotal = 0;
@@ -529,26 +569,37 @@ export class Battle {
         let player1TotalDamage = 0;
         let player2TotalDamage = 0;
 
-        // 清空战斗日志
+        // 清空战斗日志和缓冲区
         const battleText = document.getElementById('battleText');
         if (battleText) {
             battleText.innerHTML = '';
         }
+        this.logBuffer = [];
 
+        // 计算显示进度的间隔（根据总次数动态调整）
+        const progressInterval = times <= 100 ? 10 : 
+                               times <= 500 ? 50 : 
+                               times <= 1000 ? 100 : 
+                               times <= 5000 ? 500 : 1000;
+        
+        // 添加开始信息
         this.addLog(`开始${times}次战斗模拟...`);
         this.addLog('------------------------');
-        console.log('开始批量战斗，初始化伤害统计：', { player1TotalDamage, player2TotalDamage });
+        this.flushLogBuffer();
 
+        // 批量处理战斗
         for (let i = 0; i < times; i++) {
+            // 更新进度显示
+            const progress = ((i + 1) / times * 100).toFixed(1);
+            if (progressFill) progressFill.style.width = `${progress}%`;
+            if (progressText) progressText.textContent = `${progress}%`;
+            if (currentBattle) currentBattle.textContent = (i + 1).toString();
+
             // 重置玩家状态
             this.reset(true);
             
             // 进行一场战斗
             const result = await this.runSingleBattle();
-            console.log(`第${i + 1}场战斗结果:`, {
-                damage: result.damage,
-                currentBattleDamage: this.currentBattleDamage
-            });
             
             // 计算剩余血量百分比
             const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
@@ -557,12 +608,6 @@ export class Battle {
             // 累加伤害统计
             player1TotalDamage += result.damage.player1;
             player2TotalDamage += result.damage.player2;
-            console.log(`累计伤害统计:`, {
-                player1TotalDamage,
-                player2TotalDamage,
-                avgPlayer1Damage: player1TotalDamage / (i + 1),
-                avgPlayer2Damage: player2TotalDamage / (i + 1)
-            });
             
             // 根据胜负情况统计血量
             if (result.winner === this.player1) {
@@ -584,12 +629,20 @@ export class Battle {
                 player2Damage: result.damage.player2
             });
 
-            // 输出简要战斗结果
-            this.addLog(`第${i + 1}场: ${result.winner ? result.winner.name + '胜利' : '平局'} | ` +
-                       `回合: ${result.turns} | ` +
-                       `${this.player1.name}血量: ${hp1Percent.toFixed(1)}% | ` +
-                       `${this.player2.name}血量: ${hp2Percent.toFixed(1)}%`);
+            // 按照动态间隔更新进度
+            if ((i + 1) % progressInterval === 0 || i === times - 1) {
+                this.addLog(`当前胜率 - ${this.player1.name}: ${(player1Wins / (i + 1) * 100).toFixed(1)}% | ${this.player2.name}: ${(player2Wins / (i + 1) * 100).toFixed(1)}%`);
+                this.flushLogBuffer();
+            }
+
+            // 每500场让出主线程一次，避免界面卡顿
+            if ((i + 1) % 500 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
         }
+
+        // 隐藏进度条
+        if (progressBar) progressBar.style.display = 'none';
 
         // 计算平均剩余血量
         const avgHp1WinningPercent = player1Wins > 0 ? player1WinningHpTotal / player1Wins : 0;
@@ -598,14 +651,6 @@ export class Battle {
         // 计算平均伤害
         const avgPlayer1Damage = player1TotalDamage / times;
         const avgPlayer2Damage = player2TotalDamage / times;
-        console.log('最终平均伤害计算结果:', {
-            avgPlayer1Damage,
-            avgPlayer2Damage,
-            totalStats: {
-                avgPlayer1Damage: Math.round(avgPlayer1Damage),
-                avgPlayer2Damage: Math.round(avgPlayer2Damage)
-            }
-        });
 
         // 输出总体统计
         const totalStats = {
@@ -620,6 +665,7 @@ export class Battle {
             avgPlayer2Damage: Math.round(avgPlayer2Damage)
         };
 
+        // 添加统计结果到日志缓冲区
         this.addLog('------------------------');
         this.addLog('战斗统计：');
         this.addLog(`总场次: ${totalStats.total}`);
@@ -636,10 +682,13 @@ export class Battle {
         this.addLog(`  ${this.player2.name} 胜利时: ${avgHp2WinningPercent.toFixed(1)}%`);
         this.addLog(`  ${this.player2.name} 失败时: 0.0%`);
         this.addLog('------------------------');
-        this.addLog('平均伤害: ');
+        this.addLog('平均伤害:');
         this.addLog(`${this.player1.name}平均伤害: ${totalStats.avgPlayer1Damage}`);
-        this.addLog(`${this.player2.name}平均伤害: ${totalStats.avgPlayer2Damage}`);
+        this.addLog(`${this.player2.name}平均伤害   : ${totalStats.avgPlayer2Damage}`);
         this.addLog('------------------------');
+
+        // 一次性显示所有日志
+        this.flushLogBuffer();
 
         this.isBatchMode = false;
         return totalStats;

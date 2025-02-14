@@ -238,7 +238,7 @@ class Game {
                     if (batchModeCheckbox && batchModeCheckbox.checked) {
                         // 获取批量战斗次数
                         const batchTimesInput = document.getElementById('batchTimes');
-                        const times = batchTimesInput ? parseInt(batchTimesInput.value) || 100 : 100;
+                        const times = batchTimesInput ? Math.min(Math.max(parseInt(batchTimesInput.value) || 1000, 1), 10000) : 1000;
                         
                         // 设置为批量模式
                         this.battle.isBatchMode = true;

@@ -8,11 +8,11 @@ export class Player {
         // 初始化所有属性
         this.stats = {
             // 基础属性
-            maxHp: 1000000,
-            currentHp: 1000000,
-            attack: 100000,
-            defense: 100000,
-            fourDimensions: 10000,
+            maxHp: 10000000,
+            currentHp: 10000000,
+            attack: 300000,
+            defense: 300000,
+            fourDimensions: 30000,
             speed: 100,
 
 
