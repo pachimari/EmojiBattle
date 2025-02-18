@@ -393,6 +393,15 @@ header h1 {
     box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
 }
 
+.battle-button.super-reset {
+    background: linear-gradient(45deg, #ffd700, #ff8c00);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.battle-button.super-reset:hover {
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
 .battle-settings {
     display: flex;
     flex-direction: column;

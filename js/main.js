@@ -306,6 +306,18 @@ class Game {
             });
         }
 
+        // 绑定超级重置按钮
+        const superResetButton = document.getElementById('superReset');
+        if (superResetButton) {
+            superResetButton.addEventListener('click', () => {
+                // 显示确认对话框
+                if (confirm('确定要超级重置吗？这将刷新页面并重置所有数据到初始状态。')) {
+                    // 刷新页面
+                    window.location.reload();
+                }
+            });
+        }
+
         // 为属性输入框添加data-stat属性
         this.setupStatInputs();
     }

@@ -281,7 +281,7 @@
                             </div>
                             <div class="option-group">
                                 <label>回合限制：</label>
-                                <input type="number" id="maxTurns" value="0" min="0" class="turns-input">
+                                <input type="number" id="maxTurns" value="100" min="0" class="turns-input">
                                 <span class="hint">(0表示无限制)</span>
                             </div>
                         </div>
@@ -296,7 +296,7 @@
                         <div class="option-row batch-options">
                             <div class="option-group">
                                 <label>战斗次数：</label>
-                                <input type="number" id="batchTimes" value="1000" min="1" max="10000" class="turns-input">
+                                <input type="number" id="batchTimes" value="10000" min="1" max="10000" class="turns-input">
                                 <span class="hint">(1-10000次)</span>
                             </div>
                         </div>
@@ -305,6 +305,7 @@
                 <div class="battle-controls">
                     <button id="startBattle" class="battle-button">开始战斗</button>
                     <button id="resetBattle" class="battle-button reset">重置战斗</button>
+                    <button id="superReset" class="battle-button super-reset">超级重置</button>
                 </div>
             </div>
 
