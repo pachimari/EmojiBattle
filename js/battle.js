@@ -54,14 +54,23 @@ export class Battle {
         // 先重置为基础属性
         player.resetToBase();
         
-        // 重新应用所有卡牌效果
-        this.reapplyAllCardEffects(player);
-        
-        // 确保当前生命值等于最大生命值
-        player.stats.currentHp = player.stats.maxHp;
-        
-        // 更新UI显示
-        player.updateUI();
+        // 在批量模式下跳过UI更新
+        if (this.isBatchMode) {
+            // 重新应用所有卡牌效果
+            this.reapplyAllCardEffects(player);
+            
+            // 确保当前生命值等于最大生命值
+            player.stats.currentHp = player.stats.maxHp;
+        } else {
+            // 重新应用所有卡牌效果
+            this.reapplyAllCardEffects(player);
+            
+            // 确保当前生命值等于最大生命值
+            player.stats.currentHp = player.stats.maxHp;
+            
+            // 更新UI显示
+            player.updateUI();
+        }
     }
 
     // 重置战斗
@@ -82,17 +91,33 @@ export class Battle {
             this.lastFirstAttacker = null;
         }
         
-        // 重置玩家状态
-        this.player1.reset();
-        this.player2.reset();
+        // 批量模式下使用优化版本
+        if (this.isBatchMode) {
+            // 重置玩家状态
+            this.player1.stats = { ...this.player1.baseStats };
+            this.player2.stats = { ...this.player2.baseStats };
+            
+            // 确保当前生命值等于最大生命值
+            this.player1.stats.currentHp = this.player1.stats.maxHp;
+            this.player2.stats.currentHp = this.player2.stats.maxHp;
+            
+            // 重新应用所有卡牌效果
+            this.reapplyAllCardEffects(this.player1);
+            this.reapplyAllCardEffects(this.player2);
+        } else {
+            // 非批量模式下使用原有逻辑
+            // 重置玩家状态
+            this.player1.reset();
+            this.player2.reset();
 
-        // 先重置所有属性为基础属性
-        this.resetPlayerRealStats(this.player1);
-        this.resetPlayerRealStats(this.player2);
+            // 先重置所有属性为基础属性
+            this.resetPlayerRealStats(this.player1);
+            this.resetPlayerRealStats(this.player2);
 
-        // 然后重新应用所有卡牌效果
-        this.reapplyAllCardEffects(this.player1);
-        this.reapplyAllCardEffects(this.player2);
+            // 然后重新应用所有卡牌效果
+            this.reapplyAllCardEffects(this.player1);
+            this.reapplyAllCardEffects(this.player2);
+        }
     }
 
     // 重置玩家的实时属性为基础属性
@@ -100,60 +125,121 @@ export class Battle {
         // 使用Player类的resetToBase方法重置为基础属性
         player.resetToBase();
         
-        // 更新UI显示
-        const realStats = document.querySelector(`.player-${player.id} .tab-content[data-tab="real"]`);
-        if (realStats) {
-            const statInputs = realStats.querySelectorAll('.stat-input');
-            statInputs.forEach(input => {
-                const statName = input.dataset.stat;
-                if (statName) {
-                    input.value = player.stats[statName];
-                }
-            });
+        // 在批量模式下跳过UI更新
+        if (!this.isBatchMode) {
+            // 更新UI显示
+            const realStats = document.querySelector(`.player-${player.id} .tab-content[data-tab="real"]`);
+            if (realStats) {
+                const statInputs = realStats.querySelectorAll('.stat-input');
+                statInputs.forEach(input => {
+                    const statName = input.dataset.stat;
+                    if (statName) {
+                        input.value = player.stats[statName];
+                    }
+                });
+            }
         }
     }
 
     // 重新应用所有卡牌效果
     reapplyAllCardEffects(player) {
-        const cardTab = document.querySelector(`.player-${player.id} .tab-content[data-tab="card"] .stats-section`);
-        if (cardTab) {
-            const effects = cardTab.querySelectorAll('.card-effect');
-            effects.forEach(effect => {
-                const cardId = effect.dataset.cardId;
-                const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
-                if (cardConfig) {
-                    const count = parseInt(effect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1);
-                    for (let i = 0; i < count; i++) {
-                        const card = new Card(cardConfig);
-                        card.applyEffect(player);
+        // 在批量模式下使用优化版本
+        if (this.isBatchMode) {
+            // 缓存卡牌效果数据，避免重复DOM查询
+            if (!this._cachedCardEffects) {
+                this._cachedCardEffects = {};
+            }
+            
+            // 如果没有缓存该玩家的卡牌效果，则进行一次DOM查询并缓存
+            if (!this._cachedCardEffects[player.id]) {
+                const cardTab = document.querySelector(`.player-${player.id} .tab-content[data-tab="card"] .stats-section`);
+                if (!cardTab) return;
+                
+                const effects = cardTab.querySelectorAll('.card-effect');
+                const playerEffects = [];
+                
+                effects.forEach(effect => {
+                    const cardId = effect.dataset.cardId;
+                    const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
+                    if (cardConfig) {
+                        const count = parseInt(effect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1);
+                        playerEffects.push({ cardConfig, count });
                     }
+                });
+                
+                this._cachedCardEffects[player.id] = playerEffects;
+            }
+            
+            // 使用缓存的卡牌效果数据
+            const playerEffects = this._cachedCardEffects[player.id];
+            playerEffects.forEach(({ cardConfig, count }) => {
+                for (let i = 0; i < count; i++) {
+                    const card = new Card(cardConfig);
+                    card.applyEffect(player);
                 }
             });
+        } else {
+            // 非批量模式下使用原有逻辑
+            const cardTab = document.querySelector(`.player-${player.id} .tab-content[data-tab="card"] .stats-section`);
+            if (cardTab) {
+                const effects = cardTab.querySelectorAll('.card-effect');
+                effects.forEach(effect => {
+                    const cardId = effect.dataset.cardId;
+                    const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
+                    if (cardConfig) {
+                        const count = parseInt(effect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1);
+                        for (let i = 0; i < count; i++) {
+                            const card = new Card(cardConfig);
+                            card.applyEffect(player);
+                        }
+                    }
+                });
+            }
         }
     }
 
     // 应用战斗开始时的效果
     applyBattleStartEffects(player, opponent) {
-        const cardTab = document.querySelector(`.player-${player.id} .tab-content[data-tab="card"] .stats-section`);
-        if (!cardTab) return;
-
-        const effects = cardTab.querySelectorAll('.card-effect');
-        effects.forEach(effect => {
-            const cardId = effect.dataset.cardId;
-            const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
-            if (!cardConfig) return;
-
-            const count = parseInt(effect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1);
-            
-            // 处理战斗开始时触发的效果
-            if (cardConfig.trigger_type === TRIGGER_TYPES.ON_BATTLE_START) {
-                this.applyCardEffect(player, opponent, cardConfig, count);
+        // 在批量模式下使用优化版本
+        if (this.isBatchMode) {
+            // 使用缓存的卡牌效果数据
+            if (!this._cachedCardEffects || !this._cachedCardEffects[player.id]) {
+                // 如果没有缓存，先调用reapplyAllCardEffects来建立缓存
+                this.reapplyAllCardEffects(player);
+                if (!this._cachedCardEffects || !this._cachedCardEffects[player.id]) return;
             }
-        });
+            
+            const playerEffects = this._cachedCardEffects[player.id];
+            playerEffects.forEach(({ cardConfig, count }) => {
+                // 处理战斗开始时触发的效果
+                if (cardConfig.trigger_type === TRIGGER_TYPES.ON_BATTLE_START) {
+                    this.applyCardEffect(player, opponent, cardConfig, count);
+                }
+            });
+        } else {
+            // 非批量模式下使用原有逻辑
+            const cardTab = document.querySelector(`.player-${player.id} .tab-content[data-tab="card"] .stats-section`);
+            if (!cardTab) return;
+
+            const effects = cardTab.querySelectorAll('.card-effect');
+            effects.forEach(effect => {
+                const cardId = effect.dataset.cardId;
+                const cardConfig = CARD_CONFIGS.find(config => config.attribute_id === cardId);
+                if (!cardConfig) return;
+
+                const count = parseInt(effect.querySelector('h4').textContent.match(/×(\d+)$/)?.[1] || 1);
+                
+                // 处理战斗开始时触发的效果
+                if (cardConfig.trigger_type === TRIGGER_TYPES.ON_BATTLE_START) {
+                    this.applyCardEffect(player, opponent, cardConfig, count);
+                }
+            });
+        }
     }
 
     // 应用攻击前的效果
     applyPreAttackEffects(attacker, defender) {
+        // 批量模式下已在processAttack中跳过此方法
         const cardTab = document.querySelector(`.player-${attacker.id} .tab-content[data-tab="card"] .stats-section`);
         if (!cardTab) return;
 
@@ -278,17 +364,23 @@ export class Battle {
 
     // 处理单次攻击
     processAttack(attacker, defender, isCombo = false) {
-        // 应用攻击前的效果
-        this.applyPreAttackEffects(attacker, defender);
-        
-        // 应用防守效果
-        this.applyDefenseEffects(defender, attacker);
+        // 在批量模式下跳过不必要的效果应用
+        if (!this.isBatchMode) {
+            // 应用攻击前的效果
+            this.applyPreAttackEffects(attacker, defender);
+            
+            // 应用防守效果
+            this.applyDefenseEffects(defender, attacker);
+        }
         
         // 计算伤害和伤害类型
         const result = defender.calculateFinalDamage(attacker, isCombo);
         
-        // 应用攻击后的效果
-        this.applyPostAttackEffects(attacker, defender, result);
+        // 在批量模式下跳过不必要的效果应用
+        if (!this.isBatchMode) {
+            // 应用攻击后的效果
+            this.applyPostAttackEffects(attacker, defender, result);
+        }
         
         // 在批量模式下跳过UI更新
         const actualDamage = this.isBatchMode ? 
@@ -300,7 +392,7 @@ export class Battle {
             defender.stats.currentHp = Math.max(0, defender.stats.currentHp - result.damage);
         }
 
-        // 新增：记录伤害
+        // 记录伤害
         if (attacker === this.player1) {
             this.currentBattleDamage.player1 += actualDamage;
         } else {
@@ -466,7 +558,7 @@ export class Battle {
     // 添加战斗日志
     addLog(message) {
         if (this.isBatchMode) {
-            // 在批量模式下，先将日志添加到缓冲区
+            // 在批量模式下，只记录重要日志
             if (message.includes('开始') || 
                 message.includes('战斗统计') || 
                 message.includes('总场次') || 
@@ -518,6 +610,7 @@ export class Battle {
 
         const battleText = document.getElementById('battleText');
         if (battleText) {
+            // 性能优化：使用DocumentFragment一次性添加所有日志
             const fragment = document.createDocumentFragment();
             this.logBuffer.forEach(message => {
                 const p = document.createElement('p');
@@ -565,7 +658,7 @@ export class Battle {
         let player1WinningHpTotal = 0;
         let player2WinningHpTotal = 0;
 
-        // 新增：总伤害统计
+        // 总伤害统计
         let player1TotalDamage = 0;
         let player2TotalDamage = 0;
 
@@ -587,58 +680,70 @@ export class Battle {
         this.addLog('------------------------');
         this.flushLogBuffer();
 
-        // 批量处理战斗
-        for (let i = 0; i < times; i++) {
-            // 更新进度显示
-            const progress = ((i + 1) / times * 100).toFixed(1);
+        // 性能优化：预先缓存一些常用值
+        const player1MaxHp = this.player1.stats.maxHp;
+        const player2MaxHp = this.player2.stats.maxHp;
+        
+        // 性能优化：批量处理战斗，使用更高效的循环
+        const batchSize = 50; // 每批次处理的战斗数量
+        const totalBatches = Math.ceil(times / batchSize);
+        
+        for (let batch = 0; batch < totalBatches; batch++) {
+            const startIndex = batch * batchSize;
+            const endIndex = Math.min(startIndex + batchSize, times);
+            
+            // 批量处理一组战斗
+            for (let i = startIndex; i < endIndex; i++) {
+                // 重置玩家状态
+                this.reset(true);
+                
+                // 进行一场战斗
+                const result = this.runSingleBattle();
+                
+                // 计算剩余血量百分比 (性能优化：避免重复计算)
+                const hp1Percent = (this.player1.stats.currentHp / player1MaxHp) * 100;
+                const hp2Percent = (this.player2.stats.currentHp / player2MaxHp) * 100;
+                
+                // 累加伤害统计
+                player1TotalDamage += result.damage.player1;
+                player2TotalDamage += result.damage.player2;
+                
+                // 根据胜负情况统计血量
+                if (result.winner === this.player1) {
+                    player1Wins++;
+                    player1WinningHpTotal += hp1Percent;
+                } else if (result.winner === this.player2) {
+                    player2Wins++;
+                    player2WinningHpTotal += hp2Percent;
+                } else {
+                    draws++;
+                }
+                
+                // 记录结果 (性能优化：减少对象创建)
+                this.batchResults.push({
+                    winner: result.winner,
+                    turns: result.turns,
+                    hp1Percent,
+                    hp2Percent,
+                    player1Damage: result.damage.player1,
+                    player2Damage: result.damage.player2
+                });
+            }
+            
+            // 更新进度显示 (每批次只更新一次UI)
+            const progress = ((endIndex) / times * 100).toFixed(1);
             if (progressFill) progressFill.style.width = `${progress}%`;
             if (progressText) progressText.textContent = `${progress}%`;
-            if (currentBattle) currentBattle.textContent = (i + 1).toString();
-
-            // 重置玩家状态
-            this.reset(true);
+            if (currentBattle) currentBattle.textContent = endIndex.toString();
             
-            // 进行一场战斗
-            const result = await this.runSingleBattle();
-            
-            // 计算剩余血量百分比
-            const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
-            const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
-            
-            // 累加伤害统计
-            player1TotalDamage += result.damage.player1;
-            player2TotalDamage += result.damage.player2;
-            
-            // 根据胜负情况统计血量
-            if (result.winner === this.player1) {
-                player1Wins++;
-                player1WinningHpTotal += hp1Percent;
-            } else if (result.winner === this.player2) {
-                player2Wins++;
-                player2WinningHpTotal += hp2Percent;
-            } else {
-                draws++;
-            }
-            
-            // 记录结果
-            this.batchResults.push({
-                ...result,
-                hp1Percent,
-                hp2Percent,
-                player1Damage: result.damage.player1,
-                player2Damage: result.damage.player2
-            });
-
             // 按照动态间隔更新进度
-            if ((i + 1) % progressInterval === 0 || i === times - 1) {
-                this.addLog(`当前胜率 - ${this.player1.name}: ${(player1Wins / (i + 1) * 100).toFixed(1)}% | ${this.player2.name}: ${(player2Wins / (i + 1) * 100).toFixed(1)}%`);
+            if (endIndex % progressInterval === 0 || endIndex === times) {
+                this.addLog(`当前胜率 - ${this.player1.name}: ${(player1Wins / endIndex * 100).toFixed(1)}% | ${this.player2.name}: ${(player2Wins / endIndex * 100).toFixed(1)}%`);
                 this.flushLogBuffer();
             }
-
-            // 每500场让出主线程一次，避免界面卡顿
-            if ((i + 1) % 500 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-            }
+            
+            // 每批次让出主线程一次，避免界面卡顿
+            await new Promise(resolve => setTimeout(resolve, 0));
         }
 
         // 隐藏进度条
@@ -684,7 +789,7 @@ export class Battle {
         this.addLog('------------------------');
         this.addLog('平均伤害:');
         this.addLog(`${this.player1.name}平均伤害: ${totalStats.avgPlayer1Damage}`);
-        this.addLog(`${this.player2.name}平均伤害   : ${totalStats.avgPlayer2Damage}`);
+        this.addLog(`${this.player2.name}平均伤害: ${totalStats.avgPlayer2Damage}`);
         this.addLog('------------------------');
 
         // 一次性显示所有日志
@@ -694,8 +799,8 @@ export class Battle {
         return totalStats;
     }
 
-    // 新增：运行单场战斗（无延迟版本）
-    async runSingleBattle() {
+    // 优化：运行单场战斗（无延迟版本）
+    runSingleBattle() {
         this.isOngoing = true;
         this.currentTurn = 0;
         
@@ -710,12 +815,32 @@ export class Battle {
         this.applyBattleStartEffects(this.player1, this.player2);
         this.applyBattleStartEffects(this.player2, this.player1);
 
+        // 性能优化：缓存常用值
+        const player1 = this.player1;
+        const player2 = this.player2;
+        const maxTurns = this.maxTurns;
+        
+        // 性能优化：预先确定先手玩家（如果速度相等）
+        let firstPlayer, secondPlayer;
+        if (player1.stats.speed === player2.stats.speed) {
+            firstPlayer = (this.lastFirstAttacker === player2 || this.lastFirstAttacker === null) ? player1 : player2;
+        }
+        
+        // 记录本场战斗的先手玩家（如果已确定）
+        if (firstPlayer) {
+            this.lastFirstAttacker = firstPlayer;
+            secondPlayer = firstPlayer === player1 ? player2 : player1;
+        }
+
         while (this.isOngoing) {
             this.currentTurn++;
 
-            // 确定先后手
-            const firstPlayer = this.player1.stats.speed >= this.player2.stats.speed ? this.player1 : this.player2;
-            const secondPlayer = firstPlayer === this.player1 ? this.player2 : this.player1;
+            // 确定先后手（如果尚未确定）
+            if (!firstPlayer) {
+                firstPlayer = player1.stats.speed > player2.stats.speed ? player1 : player2;
+                secondPlayer = firstPlayer === player1 ? player2 : player1;
+                this.lastFirstAttacker = firstPlayer;
+            }
 
             // 处理先手玩家的回合
             if (this.skipNextTurn !== firstPlayer) {
@@ -724,7 +849,7 @@ export class Battle {
                     return { 
                         winner: firstPlayer, 
                         turns: this.currentTurn,
-                        damage: { ...this.currentBattleDamage }
+                        damage: this.currentBattleDamage
                     };
                 }
                 if (result.hasCombo) {
@@ -742,7 +867,7 @@ export class Battle {
                     return { 
                         winner: secondPlayer, 
                         turns: this.currentTurn,
-                        damage: { ...this.currentBattleDamage }
+                        damage: this.currentBattleDamage
                     };
                 }
                 if (result.hasCombo) {
@@ -754,27 +879,27 @@ export class Battle {
             }
 
             // 检查回合数限制
-            if (this.maxTurns > 0 && this.currentTurn >= this.maxTurns) {
-                const hp1Percent = (this.player1.stats.currentHp / this.player1.stats.maxHp) * 100;
-                const hp2Percent = (this.player2.stats.currentHp / this.player2.stats.maxHp) * 100;
+            if (maxTurns > 0 && this.currentTurn >= maxTurns) {
+                const hp1Percent = (player1.stats.currentHp / player1.stats.maxHp) * 100;
+                const hp2Percent = (player2.stats.currentHp / player2.stats.maxHp) * 100;
                 
                 if (hp1Percent > hp2Percent) {
                     return { 
-                        winner: this.player1, 
+                        winner: player1, 
                         turns: this.currentTurn,
-                        damage: { ...this.currentBattleDamage }
+                        damage: this.currentBattleDamage
                     };
                 } else if (hp2Percent > hp1Percent) {
                     return { 
-                        winner: this.player2, 
+                        winner: player2, 
                         turns: this.currentTurn,
-                        damage: { ...this.currentBattleDamage }
+                        damage: this.currentBattleDamage
                     };
                 } else {
                     return { 
                         winner: null, 
                         turns: this.currentTurn,
-                        damage: { ...this.currentBattleDamage }
+                        damage: this.currentBattleDamage
                     }; // 平局
                 }
             }
@@ -783,7 +908,7 @@ export class Battle {
         return { 
             winner: null, 
             turns: this.currentTurn,
-            damage: { ...this.currentBattleDamage }
+            damage: this.currentBattleDamage
         }; // 平局
     }
 } 

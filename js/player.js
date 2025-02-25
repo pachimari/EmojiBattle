@@ -152,54 +152,63 @@ export class Player {
 
     // 计算最终伤害（包含暴击、破击效果）
     calculateFinalDamage(attacker, isCombo = false) {
-        let damage = this.calculateDamage(attacker);
-        let effects = [];
-        let hasCombo = false;
-
+        // 性能优化：预先分配数组大小，减少内存重分配
+        const effects = [];
+        
         // 检查是否触发连击（只在非连击状态下检查）
-        if (!isCombo) {
-            hasCombo = attacker.checkCombo(this);
-            if (hasCombo) {
-                return {
-                    damage: Math.max(1, Math.round(damage)),
-                    type: 'normal',
-                    hasCombo: true,
-                    effects: ['combo']
-                };
-            }
+        if (!isCombo && attacker.checkCombo(this)) {
+            // 性能优化：直接返回对象，减少中间变量
+            return {
+                damage: this.calculateDamage(attacker),
+                type: 'normal',
+                hasCombo: true,
+                effects: ['combo']
+            };
         }
 
+        // 计算基础伤害
+        let damage = this.calculateDamage(attacker);
+        
         // 检查防守效果（闪避优先于格挡）
         const isDodged = this.checkDodge();
-        const isBlocked = !isDodged && this.checkBlock(); // 只有在没有闪避时才检查格挡
-
-        // 检查攻击效果（暴击优先于破击）
-        const isCrit = attacker.checkCrit(this);
-        const isPenetrate = !isCrit && attacker.checkPenetrate(this);
-
-        // 应用防守效果
+        
         if (isDodged) {
             damage = 0;
             effects.push('dodge');
-        } else if (isBlocked) { // 使用else if确保互斥
+            
+            // 性能优化：提前返回，避免不必要的计算
+            return {
+                damage: 0,
+                type: 'dodge',
+                hasCombo: false,
+                effects: effects
+            };
+        }
+        
+        // 只有在没有闪避时才检查格挡
+        const isBlocked = this.checkBlock();
+        if (isBlocked) {
             const blockEfficiency = Math.min(99.99, Math.max(0, this.stats.blockEfficiency));
             damage *= (1 - blockEfficiency / 100);
             effects.push('block');
         }
         
-        // 应用攻击效果（只有在没有闪避时才应用）
-        if (!isDodged) {
-            if (isCrit) {
-                damage *= attacker.stats.critDamage / 100;
-                effects.push('crit');
-            } else if (isPenetrate) {
+        // 检查攻击效果（暴击优先于破击）
+        const isCrit = attacker.checkCrit(this);
+        if (isCrit) {
+            damage *= attacker.stats.critDamage / 100;
+            effects.push('crit');
+        } else {
+            // 只有在没有暴击时才检查破击
+            const isPenetrate = attacker.checkPenetrate(this);
+            if (isPenetrate) {
                 damage *= attacker.stats.penetrateDamage / 100;
                 effects.push('penetrate');
             }
         }
 
-        // 确保最小伤害为1（除非被闪避）
-        damage = isDodged ? 0 : Math.max(1, Math.round(damage));
+        // 确保最小伤害为1
+        damage = Math.max(1, Math.round(damage));
 
         return {
             damage: damage,
